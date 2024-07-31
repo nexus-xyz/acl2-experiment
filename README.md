@@ -15,7 +15,7 @@ No. This is just an experiment using [an existing library](https://www.cs.utexas
 
 ## How to reproduce
 
-1. [Install acl2](https://www.cs.utexas.edu/~moore/acl2/current/HTML/installation/installation.html). The code was developed using the ACL2 commit ID 17138a64970a2ec5159c36d0dcedbba3cb0e3583. Build books using `make regression` (or later by need when you get stuck).
+1. [Install acl2](https://www.cs.utexas.edu/~moore/acl2/current/HTML/installation/installation.html). The code was developed using the ACL2 commit ID [17138a64970a2ec5159c36d0dcedbba3cb0e3583](https://github.com/search?q=repo%3Aacl2%2Facl2+17138a64970a2ec5159c36d0dcedbba3cb0e3583&type=commits). Build books using `make regression` (or later by need when you get stuck).
 2. Run `saved_acl2`
 3. Paste the contents of `package.lsp` in this directory into the ACL2 console.
 4. Paste the contents of `add32.lisp` in this directory into the ACL2 console.

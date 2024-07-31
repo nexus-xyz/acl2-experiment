@@ -86,7 +86,7 @@
   (equal
    (pfield::add x (pfield::add y z p) p) s))
 
-;; Prove
+;; Prove the correctness of the triple-sum constraint
 (defthm make-triple-sum-constraint-correct
   (implies (and (dm::primep p)
                 (r1cs::r1cs-valuationp valuation p)
@@ -109,131 +109,132 @@
                                   ())
                   )))
 
+;; The specification of 32-bit addition
 (defun add32p (x y z)
   (equal
    (mod (+ x y) *2-to-32*)
    z))
 
-;; now here
-
-(include-book "centaur/bitops/floor-mod" :dir :system)
-
-(defthm floor-one
-    (implies
-     (and
-      (integerp M)
-      (integerp N)
-      (< 0 M)
-      (<= M N)
-      (< N (* 2 M)))
-     (equal (floor N M) 1))
-  :hints (("Goal" :in-theory (e/d (acl2::floor-unique) (floor))))
+(local
+ (include-book "centaur/bitops/floor-mod" :dir :system)
 )
 
-(defthm mod-around-double
-    (implies
-     (and
-      (integerp M)
-      (integerp N)
-      (< 0 M)
-      (< 0 N)
-      (<= M N)
-      (< N (* 2 M)))
-     (equal
-      (MOD N M)
-      (- N M)
-      ))
-  :hints (("Goal" :in-theory (e/d (mod acl2::floor-unique) (floor))))
-  )
-;;heree
+(local
+ (defthmd floor-one
+     (implies
+      (and
+       (integerp M)
+       (integerp N)
+       (< 0 M)
+       (<= M N)
+       (< N (* 2 M)))
+      (equal (floor N M) 1))
+   :hints (("Goal" :in-theory (e/d (acl2::floor-unique) (floor))))
+   ))
 
+(local
+ (defthm mod-around-double
+     (implies
+      (and
+       (integerp M)
+       (integerp N)
+       (< 0 M)
+       (<= M N)
+       (< N (* 2 M)))
+      (equal
+       (MOD N M)
+       (- N M)
+       ))
+   :hints (("Goal" :in-theory (e/d (mod floor-one)
+                                   (floor))))
+   ))
 
-(defthm modpp
-    (implies
-     (and
-      (integerp p)
-      (integerp x)
-      (integerp z)
-      (< 0 P)
-      (<= 0 Z)
-      )
-     (equal
-      (MOD (+ X P Z) P)
-      (MOD (+ X Z) P)))
-  )
+(local
+ (defthm modpp
+     (implies
+      (and
+       (integerp p)
+       (integerp x)
+       (integerp z)
+       (< 0 P)
+       (<= 0 Z)
+       )
+      (equal
+       (MOD (+ X P Z) P)
+       (MOD (+ X Z) P)))
+   ))
 
-;;now heere
+(local
+ (defthm negative-becomes-big
+     (implies
+      (and
+       (< 8589934592 P)
+       (integerp P)
+       (< (+ X Y) 4294967296)
+       (INTEGERP X)
+       (INTEGERP Y)
+       (<= 0 X)
+       (<= 0 Y))
+      (equal
+       (MOD (+ -4294967296 X Y) P)
+       (- P (- 4294967296 (+ X Y)))))
+   :hints (("Goal" :in-theory (e/d (mod) (floor))
+                   :use ((
+                          :instance
+                          acl2::floor-of-x-negative-step
+                          (X (+ -4294967296 X Y))
+                          (Y P)
+                          ))
+                   ))
+   ))
 
-(defthm negative-becomes-big
-    (implies
-     (and
-      (integerp P)
-      (< (+ X Y) 4294967296)
-      (< 8589934592 P)
-      (< X 4294967296)
-      (< Y 4294967296)
-      (INTEGERP X)
-      (INTEGERP Y)
-      (<= 0 X)
-      (<= 0 Y))
-     (equal
-      (MOD (+ -4294967296 X Y) P)
-      (- P (- 4294967296 (+ X Y)))))
-  :hints (("Goal" :in-theory (e/d (mod) (floor))
-                  :use ((
-                         :instance
-                         acl2::floor-of-x-negative-step
-                         (X (+ -4294967296 X Y))
-                         (Y P)
-                        ))
-                  ))
-)
+(local
+ (defthm rather-small
+     (implies
+      (and
+       (INTEGERP P)
+       (< 8589934592 P)
+       (< X 4294967296)
+       (< Y 4294967296)
+       (INTEGERP X)
+       (INTEGERP Y)
+       (<= 0 X)
+       (<= 0 Y)
+       (< (MOD (+ -4294967296 X Y) P)
+          4294967296))
+      (equal
+       (MOD (+ X Y) 4294967296) (- (+ X Y) 4294967296)))
+   :hints (("Goal"
+            :cases
+            ((<= 4294967296 (+ X Y)))
+            ))
+   ))
 
-(defthm rather-small
-    (implies
-     (and
-      (INTEGERP P)
-      (< 8589934592 P)
-      (< X 4294967296)
-      (< Y 4294967296)
-      (INTEGERP X)
-      (INTEGERP Y)
-      (<= 0 X)
-      (<= 0 Y)
-      (< (MOD (+ -4294967296 X Y) P)
-         4294967296))
-     (equal
-      (MOD (+ X Y) 4294967296) (- (+ X Y) 4294967296)))
-  :hints (("Goal"
-           :cases
-           ((<= 4294967296 (+ X Y)))
-           ))
-  )
-
-
-(defthm add32p-sound1
-    (implies
-     (and
-      (dm::primep p)
-      (< (* 2 *2-to-32*) p)
-      (32-bit-carryp o p)
-      (triple-sump x y o z p)
-      (integerp x)
-      (integerp y)
-      (integerp z)
-      (integerp o)
-      (<= 0 x)
-      (<= 0 y)
-      (<= 0 z)
-      (< x *2-to-32*)
-      (< y *2-to-32*)
-      (< z *2-to-32*)
-      (<= 0 o)
-      (< o p)
-      )
-     (add32p x y z))
-  :hints (("Goal" :in-theory (e/d (pfield::add) (mod))))
-  )
+(local
+ ;; TODO: avoid opening pfield abstraction
+ (defthmd add32p-sound1
+     (implies
+      (and
+       (dm::primep p)
+       (< (* 2 *2-to-32*) p)
+       (32-bit-carryp o p)
+       (triple-sump x y o z p)
+       (integerp x)
+       (integerp y)
+       (integerp z)
+       (integerp o)
+       (<= 0 x)
+       (<= 0 y)
+       (<= 0 z)
+       (< x *2-to-32*)
+       (< y *2-to-32*)
+       (< z *2-to-32*)
+       (<= 0 o)
+       (< o p)
+       )
+      (add32p x y z))
+   :hints (("Goal" :in-theory (e/d (pfield::add) (mod))))
+   ))
 
 
 ;; Make a sequence of R1CS constraints in sparse form that asserts that three vars
@@ -256,7 +257,7 @@
      (r1cs::r1cs-constraint-listp (make-add32-constraints var-x var-y var-o var-z))))
 
 ;; soundness of the 32-bit addition circuit, assuming range-check elsewhere
-(defthm make-add32-constraints-sound
+(defthmd make-add32-constraints-sound
     (implies
      (and
       (dm::primep p)
