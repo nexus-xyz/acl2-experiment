@@ -7,7 +7,7 @@ The code here is pure experiment. Don't expect it to be maintained.
 
 ## Is this cutting-edge?
 
-No. This is just an experiment using [an existing library](https://www.cs.utexas.edu/~moore/acl2/manuals/current/manual/index-seo.php/R1CS____R1CS) in an elementary way. For more advanced usage of the library see [the paper by the original authors of the library](https://arxiv.org/abs/2311.08858).
+No. This is just an experiment using [an existing library](https://www.cs.utexas.edu/~moore/acl2/manuals/current/manual/?topic=ACL2____TOP) in an elementary way. For more advanced usage of the library see [the paper by the original authors of the library](https://arxiv.org/abs/2311.08858).
 
 ## Where is the theorem?
 
